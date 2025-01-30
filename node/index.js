@@ -27,14 +27,27 @@ const server = http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const params = parsedUrl.query;
     const pathname = parsedUrl.pathname;
-    const region = (params.region || 'us').toLowerCase().trim();
-    const service = params.service;
-    const sort = params.sort || 'name';
 
     // Check for the root path "/"
     if (pathname === '/' && !parsedUrl.query.service) {
         return handleHomePage(res);
     }
+
+    // Use a regular expression to extract the path parameters
+    const pathRegex = /^\/([a-zA-Z0-9-]+)\/([a-zA-Z0-9-]+)\/([a-zA-Z0-9-]+)\.m3u$/;
+    const match = pathname.match(pathRegex);
+
+    if (!match) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        return res.end('Error: Invalid URL format');
+    }
+
+    // Extract the parameters from the path
+    const service = match[1].toLowerCase();
+    const region = match[2].toLowerCase();
+    const sort = match[3].toLowerCase();
+
+    console.log(`Service: ${service}, Region: ${region}, Sort: ${sort}`);
 
     // Check if the service parameter is missing
     if (!service) {
@@ -704,7 +717,7 @@ function handleHomePage(res) {
 	</div>
       <script>
         const origin = window.location.origin;
-        const accessUrl = \`\${origin}?region=ADD_REGION&service=ADD_SERVICE\`;
+        const accessUrl = \`\${origin}/{ADD_SERVICE}/{ADD_REGION}/{ORDER}.m3u\`;
 
         document.getElementById('access-url').textContent = accessUrl;
       </script>
